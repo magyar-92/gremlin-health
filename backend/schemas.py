@@ -47,7 +47,7 @@ class PhotoBase(BaseModel):
     latitude: float
     longitude: float
     image_url: str
-    metadata: Optional[str] = None
+    photo_metadata: Optional[str] = None
 
 
 class PhotoCreate(PhotoBase):

@@ -73,7 +73,7 @@ def create_photo(db: Session, user_id: int, photo: PhotoCreate):
         latitude=photo.latitude,
         longitude=photo.longitude,
         image_url=photo.image_url,
-        metadata=photo.metadata
+        photo_metadata=photo.photo_metadata
     )
     db.add(db_photo)
     db.commit()

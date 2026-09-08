@@ -41,7 +41,7 @@ class Photo(Base):
     longitude = Column(Float)
     image_url = Column(String)  # URL to stored image in cloud storage
     uploaded_at = Column(DateTime, default=datetime.utcnow)
-    metadata = Column(Text)  # JSON string with additional metadata
+    photo_metadata = Column(Text)  # JSON string with additional metadata
 
     user = relationship("User", back_populates="photos")
 
