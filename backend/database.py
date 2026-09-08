@@ -11,8 +11,9 @@ DATABASE_URL = os.getenv(
     "postgresql://user:password@localhost/gremlin_health"
 )
 
-# For production use with Supabase, the URL should be:
-# postgresql://postgres:[PASSWORD]@[HOST]:[PORT]/postgres
+# Convert standard postgresql:// to postgresql+psycopg:// for psycopg driver
+if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
 
 engine = create_engine(
     DATABASE_URL,
