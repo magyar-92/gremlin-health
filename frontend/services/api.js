@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://gremlin-health-production.up.railway.app/api';
+const API_URL = 'http://localhost:8000/api';
 
 const api = axios.create({
   baseURL: API_URL,
