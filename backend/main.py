@@ -38,6 +38,17 @@ def health_check():
     return {"status": "ok", "version": "0.1.0"}
 
 
+# Debug endpoint
+@app.get("/debug/users")
+def debug_users_endpoint(db: Session = Depends(get_db)):
+    try:
+        users = crud.get_all_users(db, skip=0, limit=100)
+        return {"success": True, "count": len(users), "users": users}
+    except Exception as e:
+        import traceback
+        return {"success": False, "error": str(e), "traceback": traceback.format_exc()}
+
+
 # ============ USER ENDPOINTS ============
 @app.post("/api/users", response_model=UserSchema)
 def create_user_endpoint(user: UserCreate, db: Session = Depends(get_db)):
