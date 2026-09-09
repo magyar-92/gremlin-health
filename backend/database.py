@@ -26,7 +26,17 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
+_tables_created = False
+
 def get_db():
+    global _tables_created
+    if not _tables_created:
+        try:
+            create_tables()
+            _tables_created = True
+        except Exception as e:
+            print(f"Warning: Could not create tables: {e}")
+
     db = SessionLocal()
     try:
         yield db
