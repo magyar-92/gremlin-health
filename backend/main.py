@@ -26,7 +26,10 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup():
-    create_tables()
+    try:
+        create_tables()
+    except Exception as e:
+        print(f"Warning: Could not create tables on startup: {e}")
 
 
 # Health Check
