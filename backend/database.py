@@ -8,12 +8,16 @@ load_dotenv()
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://user:password@localhost/gremlin_health"
+    "sqlite:///./gremlin_health.db"
 )
 
 # Convert standard postgresql:// to postgresql+psycopg:// for psycopg driver
 if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+
+# Use SQLite if DATABASE_URL looks like a placeholder or is invalid
+if "[PASSWORD]" in DATABASE_URL or "[HOST]" in DATABASE_URL:
+    DATABASE_URL = "sqlite:///./gremlin_health.db"
 
 engine = create_engine(
     DATABASE_URL,
