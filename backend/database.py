@@ -43,9 +43,33 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 _tables_created = False
+_fallback_used = False
 
 def get_db():
-    global _tables_created
+    global _tables_created, _fallback_used, engine
+
+    if not _fallback_used:
+        try:
+            db = SessionLocal()
+            # Test connection with a simple query
+            db.execute("SELECT 1")
+            db.commit()
+        except Exception as e:
+            print(f"PostgreSQL connection failed, switching to in-memory SQLite: {str(e)[:100]}")
+            global DATABASE_URL
+            DATABASE_URL = "sqlite:///:memory:"
+            engine = create_engine(
+                DATABASE_URL,
+                poolclass=StaticPool,
+                echo=os.getenv("SQL_ECHO", "false").lower() == "true",
+                connect_args={"check_same_thread": False}
+            )
+            SessionLocal.configure(bind=engine)
+            _fallback_used = True
+            db = SessionLocal()
+    else:
+        db = SessionLocal()
+
     if not _tables_created:
         try:
             create_tables()
@@ -53,7 +77,6 @@ def get_db():
         except Exception as e:
             print(f"Warning: Could not create tables: {e}")
 
-    db = SessionLocal()
     try:
         yield db
     finally:
