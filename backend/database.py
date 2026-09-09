@@ -6,23 +6,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "sqlite:///./gremlin_health.db"
-)
+DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 # Convert standard postgresql:// to postgresql+psycopg:// for psycopg driver
 if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
 
-# Use SQLite if DATABASE_URL looks like a placeholder or is invalid
-if "[PASSWORD]" in DATABASE_URL or "[HOST]" in DATABASE_URL:
-    DATABASE_URL = "sqlite:///./gremlin_health.db"
+# Use in-memory SQLite if DATABASE_URL is not set or has placeholders
+if not DATABASE_URL or "[PASSWORD]" in DATABASE_URL or "[HOST]" in DATABASE_URL:
+    DATABASE_URL = "sqlite:///:memory:"
 
 engine = create_engine(
     DATABASE_URL,
-    poolclass=StaticPool if "sqlite" in DATABASE_URL else None,
-    echo=os.getenv("SQL_ECHO", "false").lower() == "true"
+    poolclass=StaticPool,
+    echo=os.getenv("SQL_ECHO", "false").lower() == "true",
+    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
