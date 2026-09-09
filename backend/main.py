@@ -26,7 +26,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup():
-    pass
+    create_tables()
 
 
 # Health Check
