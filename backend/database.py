@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 import os
@@ -15,13 +15,29 @@ if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
 # Use in-memory SQLite if DATABASE_URL is not set or has placeholders
 if not DATABASE_URL or "[PASSWORD]" in DATABASE_URL or "[HOST]" in DATABASE_URL:
     DATABASE_URL = "sqlite:///:memory:"
+    print(f"Using in-memory SQLite database")
+else:
+    print(f"Attempting to use PostgreSQL database")
 
-engine = create_engine(
-    DATABASE_URL,
-    poolclass=StaticPool,
-    echo=os.getenv("SQL_ECHO", "false").lower() == "true",
-    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
-)
+try:
+    engine = create_engine(
+        DATABASE_URL,
+        poolclass=StaticPool,
+        echo=os.getenv("SQL_ECHO", "false").lower() == "true",
+        connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+    )
+    # Test connection
+    with engine.connect() as conn:
+        print(f"Database connection successful: {DATABASE_URL[:50]}...")
+except Exception as e:
+    print(f"Failed to connect to PostgreSQL ({str(e)[:100]}), falling back to in-memory SQLite")
+    DATABASE_URL = "sqlite:///:memory:"
+    engine = create_engine(
+        DATABASE_URL,
+        poolclass=StaticPool,
+        echo=os.getenv("SQL_ECHO", "false").lower() == "true",
+        connect_args={"check_same_thread": False}
+    )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
