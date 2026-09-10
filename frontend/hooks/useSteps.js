@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Pedometer } from 'expo-sensors';
 
-let lastSteps = 0;
-
 export const useSteps = () => {
   const [steps, setSteps] = useState(0);
   const [isPedometerAvailable, setIsPedometerAvailable] = useState('checking');
 
   useEffect(() => {
-    let pollInterval;
+    let subscription;
 
     const initPedometer = async () => {
       try {
@@ -19,54 +17,35 @@ export const useSteps = () => {
 
         if (!isAvailable) {
           console.log('⚠️ Педометр недоступний на цьому пристрої');
+          setSteps(0);
           return;
         }
 
-        // Спробуємо отримати кроки для сьогодні через getStepCountAsync
-        console.log('🚶 Запускаю опитування кроків...');
+        console.log('🚶 Запускаю watchStepCount для поточних кроків...');
 
-        pollInterval = setInterval(async () => {
-          try {
-            const now = new Date();
-            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-            const result = await Pedometer.getStepCountAsync(startOfDay, now);
-            console.log('🚶 Кроки отримані:', result?.steps || 0);
-
-            if (result && result.steps >= 0) {
-              setSteps(result.steps);
-              lastSteps = result.steps;
-            }
-          } catch (err) {
-            console.log('❌ Помилка при отриманні кроків:', err.message);
+        subscription = Pedometer.watchStepCount((stepData) => {
+          console.log('🚶 Дані педометра отримані:', stepData);
+          if (stepData && typeof stepData.steps === 'number') {
+            console.log('🚶 Нові кроки:', stepData.steps);
+            setSteps(stepData.steps);
           }
-        }, 3000);
+        });
 
-        // Один раз спробуємо отримати при запуску
-        try {
-          const now = new Date();
-          const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-          const initialResult = await Pedometer.getStepCountAsync(startOfDay, now);
-          console.log('🚶 Початкові кроки:', initialResult?.steps || 0);
-          if (initialResult && initialResult.steps >= 0) {
-            setSteps(initialResult.steps);
-            lastSteps = initialResult.steps;
-          }
-        } catch (err) {
-          console.log('❌ Помилка при отриманні початкових кроків:', err.message);
-        }
+        console.log('✅ watchStepCount підписка активна');
 
       } catch (error) {
         console.log('❌ Помилка педометра:', error.message);
         setIsPedometerAvailable('unavailable');
+        setSteps(0);
       }
     };
 
     initPedometer();
 
     return () => {
-      if (pollInterval) {
-        clearInterval(pollInterval);
+      if (subscription) {
+        console.log('🚶 Очищую підписку на кроки');
+        subscription.remove();
       }
     };
   }, []);
