@@ -38,12 +38,6 @@
         {
           "motionPermission": "Дозвіл на доступ до датчика рухомості для підрахунку кроків"
         }
-      ],
-      [
-        "react-native-health-connect",
-        {
-          "healthConnectPermission": "Дозвіл на доступ до Health Connect для підрахунку кроків"
-        }
       ]
     ],
     "extra": {

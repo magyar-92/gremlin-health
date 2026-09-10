@@ -3,12 +3,12 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity
 import { userService, stepsService } from '../services/api';
 import { Card, Button, CircleButton, ProgressBar } from '../components';
 import { colors, typography, spacing, borderRadius } from '../theme';
-import { useHealthConnect } from '../hooks/useHealthConnect';
+import { useSteps } from '../hooks/useSteps';
 
 export default function HomeScreen() {
   const [userId, setUserId] = useState(null);
   const [userName, setUserName] = useState('User');
-  const { steps: deviceSteps, isAvailable: healthConnectAvailable, refetch } = useHealthConnect();
+  const { steps: deviceSteps, isPedometerAvailable } = useSteps();
   const [stepGoal, setStepGoal] = useState(100000);
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState(0);
@@ -145,7 +145,7 @@ export default function HomeScreen() {
 
       {/* Debug: Health Connect Status */}
       <Text style={styles.debugText}>
-        🏥 Health Connect: {healthConnectAvailable === 'available' ? '✅ Підключено' : healthConnectAvailable === 'checking' ? '⏳ Перевіряю...' : '❌ Недоступний'}
+        🚶 Педометр: {isPedometerAvailable === 'available' ? '✅ Доступний' : isPedometerAvailable === 'checking' ? '⏳ Перевіряю...' : '❌ Недоступний'}
       </Text>
 
       {/* Daily Activity */}

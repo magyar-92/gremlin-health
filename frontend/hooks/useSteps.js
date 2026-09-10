@@ -1,56 +1,55 @@
 import { useState, useEffect } from 'react';
 import { Pedometer } from 'expo-sensors';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const STEPS_STORAGE_KEY = 'accumulated_steps';
+const LAST_SYNC_KEY = 'last_steps_sync';
 
 export const useSteps = () => {
   const [steps, setSteps] = useState(0);
   const [isPedometerAvailable, setIsPedometerAvailable] = useState('checking');
-  const [cumulativeSteps, setCumulativeSteps] = useState(0);
 
   useEffect(() => {
     let subscription;
 
     const initPedometer = async () => {
       try {
+        // Завантажу збережені кроки
+        const savedSteps = await AsyncStorage.getItem(STEPS_STORAGE_KEY);
+        if (savedSteps) {
+          setSteps(parseInt(savedSteps, 10));
+          console.log('🚶 Завантажено збережені кроки:', savedSteps);
+        }
+
         console.log('🚶 Перевіряю доступність педометра...');
         const isAvailable = await Pedometer.isAvailableAsync();
         console.log('🚶 Педометр доступний:', isAvailable);
         setIsPedometerAvailable(isAvailable ? 'available' : 'unavailable');
 
         if (!isAvailable) {
-          console.log('⚠️ Педометр недоступний - використовую симуляцію');
-          // Симулюємо кроки для тестування UI
-          let simulatedSteps = 0;
-          const simulator = setInterval(() => {
-            simulatedSteps += Math.floor(Math.random() * 5) + 1;
-            setSteps(simulatedSteps);
-            console.log('🎮 Симульовані кроки:', simulatedSteps);
-          }, 2000);
-
-          return () => clearInterval(simulator);
+          console.log('⚠️ Педометр недоступний');
+          return;
         }
 
         console.log('🚶 Запускаю watchStepCount...');
-
         subscription = Pedometer.watchStepCount((stepData) => {
-          console.log('🚶 Дані педометра:', JSON.stringify(stepData));
           if (stepData && typeof stepData.steps === 'number') {
-            // watchStepCount повертає ІНКРЕМЕНТАЛЬНІ кроки
-            const newSteps = stepData.steps;
-            console.log('🚶 Інкрементальні кроки:', newSteps);
+            console.log('🚶 Нові кроки:', stepData.steps);
 
-            setCumulativeSteps(prev => {
-              const total = prev + newSteps;
-              console.log('🚶 Загальна сума кроків:', total);
-              setSteps(total);
-              return total;
+            setSteps(prev => {
+              const newTotal = prev + stepData.steps;
+              console.log('🚶 Загалом кроків:', newTotal);
+
+              // Зберігаю в AsyncStorage
+              AsyncStorage.setItem(STEPS_STORAGE_KEY, newTotal.toString());
+
+              return newTotal;
             });
           }
         });
 
-        console.log('✅ watchStepCount активний');
-
       } catch (error) {
-        console.log('❌ Помилка педометра:', error.message, error);
+        console.log('❌ Помилка педометра:', error.message);
         setIsPedometerAvailable('unavailable');
       }
     };
@@ -59,11 +58,16 @@ export const useSteps = () => {
 
     return () => {
       if (subscription) {
-        console.log('🚶 Очищую підписку');
         subscription.remove();
       }
     };
   }, []);
 
-  return { steps, isPedometerAvailable };
+  const resetSteps = async () => {
+    setSteps(0);
+    await AsyncStorage.setItem(STEPS_STORAGE_KEY, '0');
+    console.log('🚶 Кроки скинуті');
+  };
+
+  return { steps, isPedometerAvailable, resetSteps };
 };
