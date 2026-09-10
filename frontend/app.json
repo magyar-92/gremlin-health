@@ -38,7 +38,19 @@
         {
           "motionPermission": "Дозвіл на доступ до датчика рухомості для підрахунку кроків"
         }
+      ],
+      [
+        "react-native-health-connect",
+        {
+          "healthConnectPermission": "Дозвіл на доступ до Health Connect для підрахунку кроків"
+        }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "adcff12f-1d71-47af-ba89-79a01db8f9a5"
+      }
+    },
+    "owner": "magyar92"
   }
 }
