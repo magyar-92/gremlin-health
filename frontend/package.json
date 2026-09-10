@@ -29,7 +29,5 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
-    "jimp-compact": "^0.16.1-2"
-  }
+  "devDependencies": {}
 }
