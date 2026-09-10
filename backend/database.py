@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 import os
@@ -52,7 +52,7 @@ def get_db():
         try:
             db = SessionLocal()
             # Test connection with a simple query
-            db.execute("SELECT 1")
+            db.execute(text("SELECT 1"))
             db.commit()
         except Exception as e:
             print(f"PostgreSQL connection failed, switching to in-memory SQLite: {str(e)[:100]}")
