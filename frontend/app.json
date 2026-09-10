@@ -11,16 +11,32 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTabletMode": true
+      "supportsTabletMode": true,
+      "infoPlist": {
+        "NSMotionUsageDescription": "Дозвіл на доступ до даних про кроки",
+        "NSHealthShareUsageDescription": "Дозвіл на доступ до даних здоров'я"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.ACTIVITY_RECOGNITION",
+        "android.permission.BODY_SENSORS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Дозвіл на доступ до датчика рухомості для підрахунку кроків"
+        }
+      ]
+    ]
   }
 }

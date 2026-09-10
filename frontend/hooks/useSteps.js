@@ -6,31 +6,33 @@ export const useSteps = () => {
   const [isPedometerAvailable, setIsPedometerAvailable] = useState('checking');
 
   useEffect(() => {
-    checkPedometerAvailability();
-    startStepTracking();
+    let subscription;
+
+    const initPedometer = async () => {
+      try {
+        const isAvailable = await Pedometer.isAvailableAsync();
+        setIsPedometerAvailable(isAvailable ? 'available' : 'unavailable');
+
+        if (isAvailable) {
+          subscription = Pedometer.watchStepCount((result) => {
+            setSteps(result.steps || 0);
+          });
+        }
+      } catch (error) {
+        console.log('Ошибка педометра:', error);
+        setIsPedometerAvailable('unavailable');
+        setSteps(0);
+      }
+    };
+
+    initPedometer();
+
+    return () => {
+      if (subscription) {
+        subscription.remove();
+      }
+    };
   }, []);
-
-  const checkPedometerAvailability = async () => {
-    try {
-      const isAvailable = await Pedometer.isAvailableAsync();
-      setIsPedometerAvailable(isAvailable ? 'available' : 'unavailable');
-    } catch (error) {
-      setIsPedometerAvailable('unavailable');
-    }
-  };
-
-  const startStepTracking = async () => {
-    try {
-      const subscription = Pedometer.watchStepCount((result) => {
-        setSteps(result.steps || 0);
-      });
-
-      return subscription;
-    } catch (error) {
-      console.log('Pedometer error:', error);
-      setSteps(0);
-    }
-  };
 
   return { steps, isPedometerAvailable };
 };
