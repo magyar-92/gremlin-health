@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Pedometer } from 'expo-sensors';
-import { AppState } from 'react-native';
+
+let lastSteps = 0;
 
 export const useSteps = () => {
   const [steps, setSteps] = useState(0);
   const [isPedometerAvailable, setIsPedometerAvailable] = useState('checking');
 
   useEffect(() => {
-    let subscription;
     let pollInterval;
-    let appStateSubscription;
 
     const initPedometer = async () => {
       try {
@@ -18,57 +17,56 @@ export const useSteps = () => {
         console.log('🚶 Педометр доступний:', isAvailable);
         setIsPedometerAvailable(isAvailable ? 'available' : 'unavailable');
 
-        if (isAvailable) {
-          console.log('🚶 Запускаю спостереження за кроками через watch...');
-          subscription = Pedometer.watchStepCount((result) => {
-            console.log('🚶 Кроки отримані (watch):', result.steps);
-            setSteps(result.steps || 0);
-          });
-
-          // Також опитуємо кроки кожні 5 секунд як резервний варіант
-          pollInterval = setInterval(async () => {
-            try {
-              const now = new Date();
-              const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-              const result = await Pedometer.getStepCountAsync(startOfDay, now);
-              if (result && result.steps > 0) {
-                console.log('🚶 Кроки отримані (poll):', result.steps);
-                setSteps(result.steps);
-              }
-            } catch (e) {
-              // Тихо ігноруємо помилки від getStepCountAsync
-            }
-          }, 5000);
-        } else {
+        if (!isAvailable) {
           console.log('⚠️ Педометр недоступний на цьому пристрої');
+          return;
         }
+
+        // Спробуємо отримати кроки для сьогодні через getStepCountAsync
+        console.log('🚶 Запускаю опитування кроків...');
+
+        pollInterval = setInterval(async () => {
+          try {
+            const now = new Date();
+            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            const result = await Pedometer.getStepCountAsync(startOfDay, now);
+            console.log('🚶 Кроки отримані:', result?.steps || 0);
+
+            if (result && result.steps >= 0) {
+              setSteps(result.steps);
+              lastSteps = result.steps;
+            }
+          } catch (err) {
+            console.log('❌ Помилка при отриманні кроків:', err.message);
+          }
+        }, 3000);
+
+        // Один раз спробуємо отримати при запуску
+        try {
+          const now = new Date();
+          const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const initialResult = await Pedometer.getStepCountAsync(startOfDay, now);
+          console.log('🚶 Початкові кроки:', initialResult?.steps || 0);
+          if (initialResult && initialResult.steps >= 0) {
+            setSteps(initialResult.steps);
+            lastSteps = initialResult.steps;
+          }
+        } catch (err) {
+          console.log('❌ Помилка при отриманні початкових кроків:', err.message);
+        }
+
       } catch (error) {
         console.log('❌ Помилка педометра:', error.message);
         setIsPedometerAvailable('unavailable');
-        setSteps(0);
       }
     };
 
     initPedometer();
 
-    // Перезапускаємо педометр коли додаток повертається з фону
-    appStateSubscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') {
-        console.log('🚶 Додаток активний, перезапускаю педометр');
-        initPedometer();
-      }
-    });
-
     return () => {
-      if (subscription) {
-        subscription.remove();
-      }
       if (pollInterval) {
         clearInterval(pollInterval);
-      }
-      if (appStateSubscription) {
-        appStateSubscription.remove();
       }
     };
   }, []);
