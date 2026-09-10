@@ -26,9 +26,24 @@ export default function HomeScreen() {
   const syncStepsToAPI = async () => {
     try {
       const today = new Date().toISOString().split('T')[0];
+      console.log(`📤 Синхронізація: користувач ${userId}, кроки ${deviceSteps}, дата ${today}`);
       await stepsService.syncSteps(userId, today, deviceSteps);
+      console.log('✅ Кроки успішно синхронізовані');
     } catch (error) {
-      console.log('Error syncing steps:', error.message);
+      console.log('❌ Помилка синхронізації:', error.message);
+    }
+  };
+
+  const testSync = async () => {
+    try {
+      console.log('🧪 Тестування: надсилаю 500 тестових кроків...');
+      const today = new Date().toISOString().split('T')[0];
+      await stepsService.syncSteps(userId, today, 500);
+      Alert.alert('✅ Успіх', 'Тестові кроки надіслано');
+      console.log('✅ Тестові кроки надіслано');
+    } catch (error) {
+      Alert.alert('❌ Помилка', error.message);
+      console.log('❌ Помилка тестування:', error.message);
     }
   };
 
@@ -122,6 +137,16 @@ export default function HomeScreen() {
         <CircleButton label="STEPS" color="secondary" size={70} />
         <CircleButton label="GRLN" color="tertiary" size={70} />
       </View>
+
+      {/* Debug: Test Button */}
+      <TouchableOpacity style={styles.testButton} onPress={testSync}>
+        <Text style={styles.testButtonText}>🧪 TEST SYNC (500 steps)</Text>
+      </TouchableOpacity>
+
+      {/* Debug: Pedometer Status */}
+      <Text style={styles.debugText}>
+        🚶 Педометр: {isPedometerAvailable === 'available' ? '✅ Доступний' : isPedometerAvailable === 'checking' ? '⏳ Перевіряю...' : '❌ Недоступний'}
+      </Text>
 
       {/* Daily Activity */}
       <Text style={styles.sectionTitle}>DAILY ACTIVITY</Text>
@@ -314,6 +339,26 @@ const styles = StyleSheet.create({
   },
   mintButtonEmoji: {
     fontSize: typography.sizes['2xl'],
+  },
+  testButton: {
+    backgroundColor: colors.accent,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.md,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  testButtonText: {
+    textAlign: 'center',
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.bold,
+    color: '#000',
+  },
+  debugText: {
+    textAlign: 'center',
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
   },
 });
 
